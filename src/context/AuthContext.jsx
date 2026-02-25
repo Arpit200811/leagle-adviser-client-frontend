@@ -1,25 +1,35 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        // Persist login state in localStorage
-        return localStorage.getItem('isLoggedIn') === 'true';
+    const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('userToken'));
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem('user');
+        return savedUser ? JSON.parse(savedUser) : null;
     });
 
-    useEffect(() => {
-        localStorage.setItem('isLoggedIn', isLoggedIn);
-    }, [isLoggedIn]);
+    const login = async (credentials) => {
+        const response = await api.post('/auth/login', credentials);
+        const { user, accessToken } = response.data;
 
-    const login = () => setIsLoggedIn(true);
+        localStorage.setItem('userToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        setUser(user);
+        setIsLoggedIn(true);
+    };
+
     const logout = () => {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('user');
+        setUser(null);
         setIsLoggedIn(false);
-        localStorage.removeItem('isLoggedIn');
     };
 
     return (
-        <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+        <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

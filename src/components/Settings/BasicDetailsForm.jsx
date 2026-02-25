@@ -4,7 +4,7 @@ import { HiOutlineMail, HiOutlinePhone, HiOutlineLockClosed, HiOutlineSave } fro
 import { motion } from 'framer-motion';
 import { Button } from '../common';
 
-const BasicDetailsForm = () => {
+const BasicDetailsForm = ({ user }) => {
     const [loading, setLoading] = useState(false);
 
     const handleSave = async () => {
@@ -25,6 +25,10 @@ const BasicDetailsForm = () => {
         });
     };
 
+    const nameParts = user?.name ? user.name.split(' ') : ["", ""];
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+
     return (
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 md:p-12 shadow-sm transition-all">
             <div className="flex flex-col gap-10">
@@ -38,9 +42,9 @@ const BasicDetailsForm = () => {
 
                 {/* Grid Form */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                    <FormInput label="First Name" value="Jane" />
-                    <FormInput label="Last Name" value="Doe" />
-                    <FormInput label="Email Address" value="jane.doe@example.com" icon={<HiOutlineMail />} type="email" />
+                    <FormInput label="First Name" value={firstName} />
+                    <FormInput label="Last Name" value={lastName} />
+                    <FormInput label="Email Address" value={user?.email || ""} icon={<HiOutlineMail />} type="email" />
                     <FormInput label="Phone Number" value="+1 (555) 123-4567" icon={<HiOutlinePhone />} type="tel" />
                     <div className="md:col-span-2">
                         <FormInput label="Address" placeholder="Street address, City, State, Zip" fullWidth />

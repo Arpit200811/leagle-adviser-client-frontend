@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { Button } from '../common';
+import api from '../../services/api';
 
 import { HiOutlineVideoCamera, HiOutlineCalendar, HiLockClosed } from 'react-icons/hi';
 import { FaGavel } from 'react-icons/fa';
@@ -11,13 +13,31 @@ const BookingSidebar = ({ lawyer }) => {
     const navigate = useNavigate();
 
     const [isBooking, setIsBooking] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedSlot, setSelectedSlot] = useState(null);
 
     const handleBooking = async () => {
+        if (!selectedSlot) {
+            toast.error("Please select a time slot first");
+            return;
+        }
+
         setIsBooking(true);
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsBooking(false);
-        navigate('/booking-success');
+        try {
+            await api.post('/appointments', {
+                lawyerId: lawyer.id,
+                appointmentDate: selectedDate,
+                time: selectedSlot,
+                reason: "Standard Legal Consultation"
+            });
+            toast.success("Appointment scheduled successfully!");
+            navigate('/my-consultations');
+        } catch (error) {
+            console.error("Booking error:", error);
+            toast.error("Failed to book appointment. Check your wallet balance.");
+        } finally {
+            setIsBooking(false);
+        }
     };
 
     const handleConsultNow = () => {
@@ -68,8 +88,8 @@ const BookingSidebar = ({ lawyer }) => {
                         </Button>
                     </div>
 
-                    <CalendarPicker />
-                    <TimeSlots dateLabel="Mon, Oct 9" />
+                    <CalendarPicker selectedDate={selectedDate} onDateChange={setSelectedDate} />
+                    <TimeSlots selectedSlot={selectedSlot} onSlotChange={setSelectedSlot} />
 
                     {/* Trust Footnote */}
                     <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 mt-2">

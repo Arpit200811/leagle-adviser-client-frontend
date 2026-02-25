@@ -1,52 +1,18 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../common';
 import { HiStar, HiOutlineLocationMarker, HiOutlineClock, HiOutlineArrowRight } from 'react-icons/hi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
+import api from '../../services/api';
+import { lawyers as mockLawyersData } from '../../data/lawyers';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 // Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
-
-const lawyers = [
-    {
-        id: 1,
-        name: 'Sarah Jenkins',
-        practice: 'Corporate Law',
-        location: 'New York',
-        availability: 'Avail Today',
-        rating: '4.9',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAecy5QDwkum-G1KW6qdvXwOyL8dpF2TYFeWZU-SpuvPwvlo9WQtZu1KJt2Axu4sgFrqC0xzl9rGx4sSd7e5tYZkrBCflx0sMSXCiXu6YGZSVVzjaZviTGo1cxVzRu6ekqKWIsZG8yxICxTvEQdMk2SUwlR17t4v2ejMgS4LbLPngwm5JCAFsIOCGWQBLWAjSFgblhA8Me8V60MX9y6GEsb-jS2Wbg-KxNpkEwQdXfmZSwzpUM0dgd9Adinc9V7kpsIQQ9Ea7TN8-I'
-    },
-    {
-        id: 2,
-        name: 'Michael Ross',
-        practice: 'Family Law',
-        location: 'Chicago',
-        availability: 'Tomorrow',
-        rating: '5.0',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA2QSvt06SJ8eClTe4gUZxVeqkUfQ4V-yh4g5cS6NSK6Z1kjVfLYzmV_tAM_YLMUzz_gUjDEHS0XbKdGAOtaskGr83A5Huq0B7c9AGfxBSFl5m79HY07sbEPJtj0u_qWRwMORPjqroi3x7AA7FmE7crhNvOJtQbMuIaEGFrtJ5Bz637prKWNSbo3hr8578M3wAJb-PO3vyY71KDxVRWVAlXiFQNYvco9STAvHn1vVKUmEfQriFLV19ka8qb05LUHomeeY1RaVQcEXM'
-    },
-    {
-        id: 3,
-        name: 'Elena Rodriguez',
-        practice: 'Immigration',
-        location: 'Miami',
-        availability: 'Avail Today',
-        rating: '4.8',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCod9c3bMM4GU2ZdVH86V1gSZcfvoJtwpyFvg1u37_1qZDGSLknXoFT3vCnfnou2UPKKCRcYeGtmatIZrwNgG71MR_Vo2iq-ddPYtVdqKVHPZbhAEylNP4s7nHfsUJpPdaDK0te1mpwfH2mQbnx0o9dh5Ws0tUGHVN69lrtcFXFAzQXakqmEArGaXlO0SW7LR8V_IZE0K-6kC8Ie_wNI0uxwJrIHsOWPr87S8arsGYHr0Za24y_8IAwK4F2oe86H6k3InyfmkDiY6Q'
-    },
-    {
-        id: 4,
-        name: 'David Chen',
-        practice: 'Intellectual Property',
-        location: 'San Francisco',
-        availability: 'In 2 days',
-        rating: '5.0',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAtu5DOKrLzk3l8Kyja8pVNldjRI_MPYp_5vtxWSvIgHJWMrsGmp6Oq0_j-aK1t-JZ2g1_zpd9XSnSC0P2kaXqHEEVRBTfQ0UFy0O6dvrkY1s_6mLXggl4TAIrH3s3NBxON1crbm7OfzWPBOWljRE0c-I5yV5-Vx9krBChDXocBkfADCuy_k6NVL2TD_qZCJP64NHPZo1YTQQHekmiM7yo49IJy0f3Ye7OyrT5wY-qxeKnNsTVofHqJBQChGroCok3Dkw9tqvvX_Fw'
-    }
-];
 
 const LawyerCard = ({ lawyer }) => (
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
@@ -74,14 +40,57 @@ const LawyerCard = ({ lawyer }) => (
                     <HiOutlineClock size={14} /> {lawyer.availability}
                 </span>
             </div>
-            <Button variant="outline" className="w-full h-10 text-sm group-hover:bg-primary group-hover:text-white group-hover:border-primary">
-                Book Consultation
-            </Button>
+            <Link to={`/lawyer/${lawyer.id}`}>
+                <Button variant="outline" className="w-full h-10 text-sm group-hover:bg-primary group-hover:text-white group-hover:border-primary">
+                    Book Consultation
+                </Button>
+            </Link>
         </div>
     </div>
 );
 
 const FeaturedLawyers = () => {
+    const [lawyers, setLawyers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTopLawyers = async () => {
+            try {
+                const response = await api.get('/lawyers');
+                if (response.data && response.data.length > 0) {
+                    const topLawyers = response.data.slice(0, 4).map(l => ({
+                        id: l.id,
+                        name: l.user?.name || "Verified Attorney",
+                        practice: l.specialization || "General Practice",
+                        location: "Virtual Profile",
+                        availability: l.availability === 'online' ? 'Avail Today' : 'Available',
+                        rating: l.rating ? Number(l.rating).toFixed(1) : "5.0",
+                        image: l.user?.image || 'https://via.placeholder.com/200'
+                    }));
+                    setLawyers(topLawyers);
+                } else {
+                    throw new Error("No data received");
+                }
+            } catch (error) {
+                console.warn("Backend unavailable, using mock data fallback for featured lawyers", error);
+                const fallbacks = mockLawyersData.slice(0, 4).map(l => ({
+                    id: l.id,
+                    name: l.name,
+                    practice: l.specialty,
+                    location: "New York, NY",
+                    availability: l.online ? 'Avail Today' : 'Available',
+                    rating: Number(l.rating).toFixed(1),
+                    image: l.image
+                }));
+                setLawyers(fallbacks);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTopLawyers();
+    }, []);
+
     return (
         <section className="py-12 lg:py-16 bg-slate-50 dark:bg-slate-900/50 transition-colors">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -95,39 +104,55 @@ const FeaturedLawyers = () => {
                     </Link>
                 </div>
 
-                {/* Desktop Grid */}
-                <div className="hidden lg:grid gap-6 grid-cols-4">
-                    {lawyers.map((lawyer, index) => (
-                        <LawyerCard key={index} lawyer={lawyer} />
-                    ))}
-                </div>
-
-                {/* Mobile/Tablet Slider */}
-                <div className="lg:hidden">
-                    <Swiper
-                        modules={[Pagination, Autoplay]}
-                        spaceBetween={20}
-                        slidesPerView={1}
-                        pagination={{ clickable: true }}
-                        autoplay={{ delay: 3000, disableOnInteraction: false }}
-                        breakpoints={{
-                            640: { slidesPerView: 2 },
-                            768: { slidesPerView: 2 },
-                        }}
-                        className="pb-12"
-                    >
-                        {lawyers.map((lawyer, index) => (
-                            <SwiperSlide key={index}>
-                                <LawyerCard lawyer={lawyer} />
-                            </SwiperSlide>
+                {loading ? (
+                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                        {[...Array(4)].map((_, i) => (
+                            <Skeleton key={i} height={350} className="rounded-xl" />
                         ))}
-                    </Swiper>
-                </div>
+                    </div>
+                ) : lawyers.length > 0 ? (
+                    <>
+                        {/* Desktop Grid */}
+                        <div className="hidden lg:grid gap-6 grid-cols-4">
+                            {lawyers.map((lawyer) => (
+                                <LawyerCard key={lawyer.id} lawyer={lawyer} />
+                            ))}
+                        </div>
+
+                        {/* Mobile/Tablet Slider */}
+                        <div className="lg:hidden">
+                            <Swiper
+                                modules={[Pagination, Autoplay]}
+                                spaceBetween={20}
+                                slidesPerView={1}
+                                pagination={{ clickable: true }}
+                                autoplay={{ delay: 3000, disableOnInteraction: false }}
+                                breakpoints={{
+                                    640: { slidesPerView: 2 },
+                                    768: { slidesPerView: 2 },
+                                }}
+                                className="pb-12"
+                            >
+                                {lawyers.map((lawyer) => (
+                                    <SwiperSlide key={lawyer.id}>
+                                        <LawyerCard lawyer={lawyer} />
+                                    </SwiperSlide>
+                                ))}
+                            </Swiper>
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-center py-10 text-slate-500">
+                        No attorneys currently available.
+                    </div>
+                )}
 
                 <div className="mt-8 flex justify-center sm:hidden">
-                    <Button variant="link" className="font-bold flex items-center gap-2">
-                        View all attorneys <HiOutlineArrowRight />
-                    </Button>
+                    <Link to="/find-lawyer">
+                        <Button variant="link" className="font-bold flex items-center gap-2">
+                            View all attorneys <HiOutlineArrowRight />
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </section>

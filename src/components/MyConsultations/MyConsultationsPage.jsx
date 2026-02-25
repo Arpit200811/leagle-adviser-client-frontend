@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../services/api';
 import ConsultationTabs from './ConsultationTabs';
 import ConsultationCard from './ConsultationCard';
 import DocumentsSidebar from './DocumentsSidebar';
@@ -9,36 +10,41 @@ import { HiOutlinePlus, HiOutlineSearch, HiOutlineBell } from 'react-icons/hi';
 
 const MyConsultationsPage = () => {
     const [activeTab, setActiveTab] = useState('upcoming');
+    const [sessions, setSessions] = useState([]);
 
-    const counts = { upcoming: 2 };
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            try {
+                const response = await api.get('/appointments/my');
+                setSessions(response.data);
+            } catch (error) {
+                console.error("Failed to fetch appointments:", error);
+            }
+        };
+        fetchAppointments();
+    }, []);
 
-    const upcomingSessions = [
-        {
-            urgent: true,
-            lawyerName: "Atty. Sarah Jenkins",
-            lawyerImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuCVRotH3ottl9EvO9HURCbr6RxFdNwBE8at0f2GBvoZALKwI9Pi9GqI1phXCjUxjW7QdGcookqYaf5ZGUKp59E9Gm1cifJ4H4iZQpib4uMX2cRxrlPDKavo3zV0rexZ_fkesIjKNXPI1GyxMxHw8aym0R66c0liBOWUE9LwFcoS1gC4Viz_ESiU2xAPmvsstBggzqj3-seKBb5NfbJbL1rxGQOJoe89Cf6jlQ5DJpeeHkj10z6qE4GxAvqYWcqbFL1NONn1nCm5n6U",
-            specialty: "Corporate Law Specialization",
-            dateTime: "Today, 2:00 PM",
-            description: "Discussion regarding the upcoming merger agreement details and intellectual property clauses review.",
-            canJoin: true
-        },
-        {
-            urgent: false,
-            lawyerName: "Atty. Michael Ross",
-            lawyerImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuBq9dYb-JZZYd9lW95WvXd29ZZ7tJ0eGQGtE_EFeXCOVmMOYlPc6wVkIxYAA0s4YnRig-l56if7K8tNyQqL41LUY5zxKyEgStWutpw3YOmJjtwJDSMnl6s4ist4VXkFb5pay-XwuHFU2aY9dssqI1PefS4i4F-yKNcxYJ0N4e62I6HU4_nNZ-f3XAOzN4MTQaOL2KcINdCLa3GQCZ-xmEcBRK7zaSWP9hA3NeggDKPWJY1Vatv4ZwKbiYonV5sctE-IG2wk3AmsAYk",
-            specialty: "Estate Planning",
-            dateTime: "Oct 24, 10:00 AM",
-            description: "Initial consultation for family trust setup.",
-            canJoin: false
-        }
-    ];
+    const upcomingSessions = sessions.filter(s => s.status !== 'completed' && s.status !== 'cancelled').map(s => ({
+        id: s.id,
+        urgent: false,
+        lawyerName: s.lawyer?.user?.name || "Atty. Unknown",
+        lawyerImage: s.lawyer?.user?.image || "https://via.placeholder.com/150",
+        specialty: s.lawyer?.specialization || "General Practice",
+        dateTime: new Date(s.appointmentDate).toLocaleString(),
+        description: s.reason || "Consultation details",
+        canJoin: true
+    }));
 
-    const pastLawyer = {
-        name: "Atty. David Kim",
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDTkzeUWm5jDrMMyQ_kipOFREzp9lxk-hcEUXztNNA6E1K6VHj_dMwJQk4wFAr_zwLsXUE2gG2730FdK45Ofv1oWD5U2I33h9imyyGirreGUwlw78g4kJSsGp4OAPG1XO-mIqUaLZnrkDjzZ94vfe7lfOQxDM-X94TnUl27goF4JVEm2kDdA5Xvwjc5gm9Hp4daFJjVR5kBlGGnhRDa4kM8GVnYOySpwoKfndGvpf-LgfboW5PDymb03OBfXdVH6oK2uQZiSlqtl5Y",
-        date: "Sep 12, 2023",
-        specialty: "Employment Law"
-    };
+    const pastSessions = sessions.filter(s => s.status === 'completed' || s.status === 'cancelled').map(s => ({
+        id: s.id,
+        lawyerId: s.lawyer?.id,
+        lawyerName: s.lawyer?.user?.name || "Atty. Unknown",
+        lawyerImage: s.lawyer?.user?.image || "https://via.placeholder.com/150",
+        specialty: s.lawyer?.specialization || "General Practice",
+        date: new Date(s.appointmentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    }));
+
+    const counts = { upcoming: upcomingSessions.length, completed: pastSessions.length };
 
     return (
         <div className="bg-background-light dark:bg-background-dark transition-colors duration-200 font-sans">
@@ -78,29 +84,32 @@ const MyConsultationsPage = () => {
                                     <h3 className="text-slate-900 dark:text-white text-xl font-black mb-6 flex items-center gap-2 tracking-tight">
                                         Recent History
                                     </h3>
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        whileInView={{ opacity: 1 }}
-                                        className="flex flex-col gap-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 p-5 border border-slate-200 dark:border-slate-800 transition-all hover:bg-slate-50 dark:hover:bg-slate-900/60"
-                                    >
-                                        <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-6">
-                                            <img
-                                                src={pastLawyer.image}
-                                                className="size-14 rounded-full object-cover grayscale opacity-60 shadow-inner"
-                                                alt="Past lawyer"
-                                            />
-                                            <div className="flex flex-col sm:flex-row flex-1 justify-between items-center sm:items-start w-full gap-4 text-center sm:text-left">
-                                                <div className="flex flex-col gap-0.5">
-                                                    <h4 className="text-slate-900 dark:text-slate-200 text-lg font-black leading-tight">{pastLawyer.name}</h4>
-                                                    <p className="text-slate-400 text-sm font-bold tracking-tight uppercase tracking-widest text-[10px]">{pastLawyer.specialty} • {pastLawyer.date}</p>
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <button className="text-primary text-sm font-black uppercase tracking-widest hover:underline decoration-primary/30 underline-offset-8">Invoice</button>
-                                                    <Link to="/review/sarah-jenkins" className="text-slate-500 hover:text-slate-900 dark:hover:text-white text-sm font-black uppercase tracking-widest transition-colors">Review</Link>
+                                    {pastSessions.slice(0, 3).map((session, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0 }}
+                                            whileInView={{ opacity: 1 }}
+                                            className="flex flex-col gap-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 p-5 border border-slate-200 dark:border-slate-800 transition-all hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                                        >
+                                            <div className="flex flex-col sm:flex-row items-center sm:items-stretch gap-6">
+                                                <img
+                                                    src={session.lawyerImage}
+                                                    className="size-14 rounded-full object-cover grayscale opacity-60 shadow-inner"
+                                                    alt="Past lawyer"
+                                                />
+                                                <div className="flex flex-col sm:flex-row flex-1 justify-between items-center sm:items-start w-full gap-4 text-center sm:text-left">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <h4 className="text-slate-900 dark:text-slate-200 text-lg font-black leading-tight">{session.lawyerName}</h4>
+                                                        <p className="text-slate-400 text-sm font-bold uppercase tracking-widest text-[10px]">{session.specialty} • {session.date}</p>
+                                                    </div>
+                                                    <div className="flex gap-4">
+                                                        <button className="text-primary text-sm font-black uppercase tracking-widest hover:underline decoration-primary/30 underline-offset-8">Invoice</button>
+                                                        <Link to={`/review/${session.lawyerId}`} className="text-slate-500 hover:text-slate-900 dark:hover:text-white text-sm font-black uppercase tracking-widest transition-colors">Review</Link>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </motion.div>
+                                        </motion.div>
+                                    ))}
                                 </div>
                             </div>
                         )}

@@ -1,5 +1,6 @@
 import { HiOutlineVideoCamera, HiOutlineChatAlt2, HiOutlineDotsVertical, HiOutlineCalendar } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const ConsultationCard = ({ session }) => {
     const isUrgent = session.urgent;
@@ -50,20 +51,24 @@ const ConsultationCard = ({ session }) => {
 
                     <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-slate-50 dark:border-slate-700/50">
                         {session.canJoin ? (
-                            <button className="flex items-center justify-center rounded-lg h-10 px-6 bg-primary hover:bg-primary-dark text-white gap-2 text-sm font-black transition-all shadow-lg shadow-primary/20 animate-pulse-slow">
-                                <HiOutlineVideoCamera className="text-lg" />
-                                <span>Join Room</span>
-                            </button>
+                            <Link to="/video-consultation" state={{ session }}>
+                                <button className="flex items-center justify-center rounded-lg h-10 px-6 bg-primary hover:bg-primary-dark text-white gap-2 text-sm font-black transition-all shadow-lg shadow-primary/20 animate-pulse-slow">
+                                    <HiOutlineVideoCamera className="text-lg" />
+                                    <span>Join Room</span>
+                                </button>
+                            </Link>
                         ) : (
                             <button className="flex items-center justify-center rounded-lg h-10 px-6 bg-slate-100 dark:bg-slate-700 text-slate-400 gap-2 text-sm font-black cursor-not-allowed border border-slate-200 dark:border-slate-600 opacity-60">
                                 <HiOutlineVideoCamera className="text-lg opacity-40" />
                                 <span>Waiting for host</span>
                             </button>
                         )}
-                        <button className="flex items-center justify-center rounded-lg h-10 px-5 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 gap-2 text-sm font-black transition-all border border-slate-200 dark:border-slate-700">
-                            <HiOutlineChatAlt2 className="text-lg" />
-                            <span>Message</span>
-                        </button>
+                        <Link to="/consultation" state={{ session }}>
+                            <button className="flex items-center justify-center rounded-lg h-10 px-5 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 gap-2 text-sm font-black transition-all border border-slate-200 dark:border-slate-700">
+                                <HiOutlineChatAlt2 className="text-lg" />
+                                <span>Message</span>
+                            </button>
+                        </Link>
                         <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 text-sm font-bold ml-auto transition-all">
                             Reschedule
                         </button>

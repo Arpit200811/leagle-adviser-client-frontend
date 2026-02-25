@@ -1,36 +1,65 @@
+import { useState } from 'react';
 import { HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import moment from 'moment';
 
-const CalendarPicker = () => {
+const CalendarPicker = ({ selectedDate, onDateChange }) => {
+    const [currentMonth, setCurrentMonth] = useState(moment());
+
+    const startDay = currentMonth.clone().startOf('month').startOf('week');
+    const endDay = currentMonth.clone().endOf('month').endOf('week');
+
+    const calendar = [];
+    let day = startDay.clone();
+    while (day.isBefore(endDay)) {
+        calendar.push(day.clone());
+        day.add(1, 'day');
+    }
+
     const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-    const dates = [
-        { n: 1, c: 'text-slate-400' }, { n: 2, c: 'text-slate-400' }, { n: 3, c: 'text-slate-400' },
-        { n: 4, c: '' }, { n: 5, c: '' }, { n: 6, c: '' }, { n: 7, c: 'text-slate-400' },
-        { n: 8, c: 'text-slate-400' }, { n: 9, c: 'bg-primary text-white font-bold shadow-md' },
-        { n: 10, c: 'border border-primary/30' }, { n: 11, c: '' }, { n: 12, c: '' },
-        { n: 13, c: '' }, { n: 14, c: 'text-slate-400' }
-    ];
 
     return (
         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mb-4">
-            <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200">October 2023</h4>
+            <div className="flex justify-between items-center mb-3 text-left">
+                <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200">
+                    {currentMonth.format('MMMM YYYY')}
+                </h4>
                 <div className="flex gap-1 text-slate-400">
-                    <button className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"><HiChevronLeft size={20} /></button>
-                    <button className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"><HiChevronRight size={20} /></button>
+                    <button
+                        onClick={() => setCurrentMonth(currentMonth.clone().subtract(1, 'month'))}
+                        className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                    >
+                        <HiChevronLeft size={20} />
+                    </button>
+                    <button
+                        onClick={() => setCurrentMonth(currentMonth.clone().add(1, 'month'))}
+                        className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                    >
+                        <HiChevronRight size={20} />
+                    </button>
                 </div>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2 text-slate-400 font-medium">
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] mb-2 text-slate-400 font-black uppercase tracking-widest">
                 {days.map(d => <span key={d}>{d}</span>)}
             </div>
             <div className="grid grid-cols-7 gap-1 text-center text-xs text-slate-700 dark:text-slate-300">
-                {dates.map((d, i) => (
-                    <button
-                        key={i}
-                        className={`p-2 rounded hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ${d.c}`}
-                    >
-                        {d.n}
-                    </button>
-                ))}
+                {calendar.map((d, i) => {
+                    const isSelected = selectedDate === d.format('YYYY-MM-DD');
+                    const isCurrentMonth = d.month() === currentMonth.month();
+                    return (
+                        <button
+                            key={i}
+                            onClick={() => onDateChange(d.format('YYYY-MM-DD'))}
+                            className={`p-2 rounded-lg transition-all font-bold ${isSelected
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110'
+                                    : isCurrentMonth
+                                        ? 'hover:bg-slate-200 dark:hover:bg-slate-700'
+                                        : 'text-slate-400 opacity-30 cursor-not-allowed'
+                                }`}
+                        >
+                            {d.date()}
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );

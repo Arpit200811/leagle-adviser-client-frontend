@@ -27,28 +27,36 @@ const LoginForm = ({ loginMethod }) => {
         e.preventDefault();
         setLoading(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setLoading(false);
+        try {
+            if (loginMethod === 'otp') {
+                // OTP logic placeholder - would call a sendOTP API
+                navigate('/otp-verification');
+                return;
+            }
 
-        if (loginMethod === 'otp') {
-            navigate('/otp-verification');
-            return;
+            await login({
+                email: formData.email,
+                password: formData.password
+            });
+
+            MySwal.fire({
+                title: <p className="text-slate-900">Success!</p>,
+                text: 'You have logged in successfully.',
+                icon: 'success',
+                confirmButtonColor: '#135bec',
+            }).then(() => {
+                navigate('/my-consultations');
+            });
+        } catch (error) {
+            MySwal.fire({
+                title: 'Login Failed',
+                text: error.response?.data?.message || 'Invalid credentials. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444',
+            });
+        } finally {
+            setLoading(false);
         }
-
-        // Trigger global login
-        login();
-
-        MySwal.fire({
-            title: <p className="text-slate-900">Success!</p>,
-            text: 'You have logged in successfully.',
-            icon: 'success',
-            confirmButtonColor: '#135bec',
-        }).then(() => {
-            navigate('/my-consultations');
-        });
-
-        console.log('Logging in with:', formData);
     };
 
     if (loginMethod === 'otp') {

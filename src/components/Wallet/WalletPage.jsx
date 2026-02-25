@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import api from '../../services/api';
 import BalanceCard, { SecurityBadge } from './BalanceCard';
 import SavedMethods from './SavedMethods';
 import AddFundsCard from './AddFundsCard';
@@ -5,7 +7,25 @@ import TransactionTable from './TransactionTable';
 import { motion } from 'framer-motion';
 
 const WalletPage = () => {
-    const userBalance = 1250.00;
+    const [balance, setBalance] = useState(0);
+    const [transactions, setTransactions] = useState([]);
+
+    const fetchWalletData = async () => {
+        try {
+            const [balanceRes, transRes] = await Promise.all([
+                api.get('/wallet/balance'),
+                api.get('/wallet/transactions')
+            ]);
+            setBalance(Number(balanceRes.data.balance) || 0);
+            setTransactions(transRes.data);
+        } catch (error) {
+            console.error("Error fetching wallet data:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchWalletData();
+    }, []);
 
     return (
         <div className="bg-background-light dark:bg-background-dark transition-colors duration-200 font-sans">
@@ -31,7 +51,7 @@ const WalletPage = () => {
                         transition={{ delay: 0.1 }}
                         className="lg:col-span-4 flex flex-col gap-8"
                     >
-                        <BalanceCard balance={userBalance} />
+                        <BalanceCard balance={balance} />
                         <SecurityBadge />
                         <SavedMethods />
                     </motion.div>
@@ -43,7 +63,7 @@ const WalletPage = () => {
                         transition={{ delay: 0.2 }}
                         className="lg:col-span-8 h-full"
                     >
-                        <AddFundsCard />
+                        <AddFundsCard onPaymentSuccess={fetchWalletData} />
                     </motion.div>
                 </div>
 
@@ -54,7 +74,7 @@ const WalletPage = () => {
                     viewport={{ once: true }}
                     className="flex flex-col gap-6"
                 >
-                    <TransactionTable />
+                    <TransactionTable transactions={transactions} />
                 </motion.section>
             </main>
         </div>

@@ -3,13 +3,17 @@ import ProfileCard from './ProfileCard';
 import BasicDetailsForm from './BasicDetailsForm';
 import SecurityQuickAccess from './SecurityQuickAccess';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 
 const SettingsPage = () => {
-    // Mock user data
-    const user = {
-        name: "Jane Doe",
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBGSEdYY5BsjtbJa4qeAs9iW0K6XGoTkxz5Z-GU1BxqjiGIfqnN9lcq0RTfOc-hbn_du_sFl5cxZxzjhmiv3ua6Zhm3Ku7LFHFl5wAlwUcGcO1r5mlpCWL-terAVQBi7K7xsfx4tgp2pQFtOps_Y_SWyWwdS0uCTSrEakYDPjPSjpSVa0temZtSwb1d1c6hiGLoplC_4lNkYey5tJ46HfsY14URAYYnod1_O4eZq0EYnLSYxibFgjC3ARckgCMQkpGIDpUWMTCH4mA",
-        joinedDate: "Nov 2021"
+    const { user } = useAuth();
+
+    // Use actual user data or fallbacks
+    const userData = {
+        name: user?.name || "Anonymous User",
+        email: user?.email || "No email provided",
+        image: user?.image || "https://via.placeholder.com/150",
+        joinedDate: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "Recently Joined"
     };
 
     return (
@@ -31,8 +35,8 @@ const SettingsPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="flex flex-col gap-10"
                     >
-                        <ProfileCard user={user} />
-                        <BasicDetailsForm />
+                        <ProfileCard user={userData} />
+                        <BasicDetailsForm user={userData} />
                         <SecurityQuickAccess />
                     </motion.div>
                 </main>

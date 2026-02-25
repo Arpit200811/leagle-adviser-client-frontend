@@ -2,7 +2,7 @@ import { HiOutlineAdjustments, HiOutlineChevronUp, HiOutlineChevronDown } from '
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
-const SearchFilters = ({ filters, setFilters }) => {
+const SearchFilters = ({ filters, setFilters, availableCategories }) => {
     const handlePracticeAreaChange = (area) => {
         const newAreas = filters.practiceAreas.includes(area)
             ? filters.practiceAreas.filter(a => a !== area)
@@ -14,7 +14,7 @@ const SearchFilters = ({ filters, setFilters }) => {
         setFilters({
             practiceAreas: [],
             minPrice: 0,
-            maxPrice: 15,
+            maxPrice: 10000,
             experience: 'Any',
             rating: 0
         });
@@ -39,23 +39,26 @@ const SearchFilters = ({ filters, setFilters }) => {
 
                 <FilterSection title="Practice Area" isOpenDefault>
                     <div className="flex flex-col gap-3.5 px-1">
-                        {['Family Law', 'Criminal Defense', 'Corporate Law', 'Immigration', 'Intellectual Property'].map((area, i) => (
-                            <label key={area} className="flex items-center gap-3 cursor-pointer group">
-                                <div className="relative flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={filters.practiceAreas.includes(area)}
-                                        onChange={() => handlePracticeAreaChange(area)}
-                                        className="peer appearance-none size-5 rounded-lg border-2 border-slate-200 dark:border-slate-800 checked:bg-primary checked:border-primary transition-all cursor-pointer shadow-sm"
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center text-white scale-0 peer-checked:scale-100 transition-transform">
-                                        <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path d="M5 13l4 4L19 7"></path></svg>
+                        {availableCategories.length > 0 ? (
+                            availableCategories.map((area, i) => (
+                                <label key={area} className="flex items-center gap-3 cursor-pointer group">
+                                    <div className="relative flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={filters.practiceAreas.includes(area)}
+                                            onChange={() => handlePracticeAreaChange(area)}
+                                            className="peer appearance-none size-5 rounded-lg border-2 border-slate-200 dark:border-slate-800 checked:bg-primary checked:border-primary transition-all cursor-pointer shadow-sm"
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center text-white scale-0 peer-checked:scale-100 transition-transform">
+                                            <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4"><path d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
                                     </div>
-                                </div>
-                                <span className="text-sm font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">{area}</span>
-                            </label>
-                        ))}
-                        <button className="text-[10px] font-black uppercase tracking-widest text-primary text-left mt-2 hover:underline">+ Show 12 more</button>
+                                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">{area}</span>
+                                </label>
+                            ))
+                        ) : (
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">Loading areas...</p>
+                        )}
                     </div>
                 </FilterSection>
 
@@ -118,15 +121,24 @@ const SearchFilters = ({ filters, setFilters }) => {
                 </FilterSection>
 
                 <FilterSection title="Rating">
-                    <div className="flex flex-col gap-4 px-1">
-                        <label className="flex items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <input type="checkbox" defaultChecked className="peer appearance-none size-5 rounded-lg border-2 border-slate-200 dark:border-slate-800 checked:bg-primary checked:border-primary transition-all" />
-                            <div className="flex text-yellow-400 text-lg">
-                                {[1, 2, 3, 4].map(star => <span key={star}>★</span>)}
-                                <span className="text-slate-200 dark:text-slate-700">★</span>
-                            </div>
-                            <span className="text-xs font-black uppercase tracking-widest text-slate-400">& Up</span>
-                        </label>
+                    <div className="flex flex-col gap-2 px-1">
+                        {[4, 3, 2, 1].map(stars => (
+                            <label key={stars} className="flex items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <input
+                                    type="radio"
+                                    name="rating"
+                                    checked={filters.rating === stars}
+                                    onChange={() => setFilters({ ...filters, rating: stars })}
+                                    className="peer appearance-none size-5 rounded-lg border-2 border-slate-200 dark:border-slate-800 checked:bg-primary checked:border-primary transition-all"
+                                />
+                                <div className="flex text-yellow-400 text-lg">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className={i < stars ? "text-yellow-400" : "text-slate-200 dark:text-slate-700"}>★</span>
+                                    ))}
+                                </div>
+                                <span className="text-xs font-black uppercase tracking-widest text-slate-400">& Up</span>
+                            </label>
+                        ))}
                     </div>
                 </FilterSection>
             </div>

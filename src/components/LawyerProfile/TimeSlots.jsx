@@ -1,27 +1,25 @@
-const TimeSlots = ({ dateLabel }) => {
+const TimeSlots = ({ selectedSlot, onSlotChange }) => {
     const slots = [
-        { time: '09:00 AM', available: true },
-        { time: '10:30 AM', available: true, selected: true },
-        { time: '01:00 PM', available: true },
-        { time: '02:30 PM', available: true },
-        { time: '04:00 PM', available: true },
+        '09:00 AM', '10:00 AM', '11:00 AM',
+        '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
     ];
 
     return (
         <div className="mb-4 text-left">
-            <h4 className="font-bold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-                Available Times ({dateLabel})
+            <h4 className="font-bold text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+                Select Time Slot
             </h4>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 {slots.map((slot, i) => (
                     <button
                         key={i}
-                        className={`py-2 px-1 text-xs font-medium rounded border transition-all ${slot.selected
-                                ? 'bg-primary/10 border-primary text-primary shadow-sm'
-                                : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary'
+                        onClick={() => onSlotChange(slot)}
+                        className={`py-3 px-2 text-xs font-bold rounded-xl border transition-all ${selectedSlot === slot
+                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary/50'
                             }`}
                     >
-                        {slot.time}
+                        {slot}
                     </button>
                 ))}
             </div>

@@ -1,55 +1,98 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import ContextSidebar from './ContextSidebar';
 import { motion } from 'framer-motion';
+import io from 'socket.io-client';
+import { useAuth } from '../../context/AuthContext';
+import { useLocation } from 'react-router-dom';
+
+import VideoCall from './VideoCall';
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 const ConsultationPage = () => {
-    // Mock data for the demonstration
+    const { user } = useAuth();
+    const location = useLocation();
+    const session = location.state?.session || {};
+
+    const [socket, setSocket] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [isTyping, setIsTyping] = useState(false);
+    const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+
     const lawyer = {
-        name: "Atty. Jessica Pearson",
-        specialty: "Corporate Law Specialist",
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCXdCQcyos3LeTzbKO1VVpW-siN2DepOrco0m6luunaQWvEjA5Co6RSBExcEtqcxbqwSDcFOIkvJW2HK2Ve4eo9_ZzeqD909niXdHpami-_EWEmRsmSLNwSwIl_DqKkU0VQgNvpjfOM-JvWVYkwJA_Vc1mroeH6olW1nR3a8RuHiriCk2Tixgmo47o-SpHCD2Q39brTKTt4K9k7OAbyR5m5cedS0aYah6FEK1BXr4Uh78lj7pqXCSvxQ1EWWOmsIcEZ2co-JlZ4L1Y",
-        rating: 4.9,
-        reviews: 124,
-        firm: "Pearson Specter Litt LLC"
+        name: session.lawyerName || "Unknown Attorney",
+        id: session.lawyerId || "lawyer123",
+        specialty: session.specialty || "General Practice",
+        image: session.lawyerImage || "https://via.placeholder.com/150",
+        rating: 5.0,
+        reviews: 0,
+        firm: "Independent Practice"
     };
 
-    const initialMessages = [
-        {
-            sender: 'lawyer',
-            senderName: 'Atty. Jessica Pearson',
-            time: '10:01 AM',
-            type: 'text',
-            content: "Hello James, I've reviewed the contract draft you sent over earlier. Overall it looks solid, but there are two clauses in the liability section we need to discuss."
-        },
-        {
-            sender: 'user',
-            senderName: 'You',
-            time: '10:02 AM',
-            type: 'text',
-            content: "Thanks for the quick turnaround, Jessica. I was worried about Clause 4 specifically. Does it expose us too much?"
-        },
-        {
-            sender: 'lawyer',
-            senderName: 'Atty. Jessica Pearson',
-            time: '10:04 AM',
-            type: 'text',
-            content: "Exactly. Clause 4 currently has an uncapped indemnity provision. I suggest we cap it at the contract value. Here is the revised language I propose:"
-        },
-        {
-            sender: 'lawyer',
-            senderName: 'Atty. Jessica Pearson',
-            time: '10:04 AM',
-            type: 'attachment',
-            fileName: 'Revised_Clause_4.pdf',
-            fileSize: '145 KB',
-            fileExt: 'PDF'
-        }
-    ];
+    useEffect(() => {
+        if (!user || !lawyer.id) return;
 
-    const [messages, setMessages] = useState(initialMessages);
+        const fetchChatHistory = async () => {
+            // In a real application, make sure `api` is imported, but assuming it's available or we can use fetch/axios
+            try {
+                // dynamic import so I don't need to change imports at the top
+                const apiModule = await import('../../services/api');
+                const res = await apiModule.default.get(`/messages/${lawyer.id}`);
+
+                const history = res.data.map(msg => ({
+                    sender: msg.senderId === user.id ? 'user' : 'lawyer',
+                    senderName: msg.senderId === user.id ? 'You' : lawyer.name,
+                    time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    type: 'text',
+                    content: msg.text
+                }));
+                setMessages(history);
+            } catch (err) {
+                console.error("Failed to fetch chat history:", err);
+            }
+        };
+
+        fetchChatHistory();
+
+        const newSocket = io(SOCKET_URL);
+        setSocket(newSocket);
+
+        newSocket.on('connect', () => {
+            newSocket.emit('register', user.id);
+        });
+
+        newSocket.on('receive_message', (messageData) => {
+            const incomingMsg = {
+                sender: 'lawyer',
+                senderName: lawyer.name,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: 'text',
+                content: messageData.text
+            };
+            setMessages(prev => [...prev, incomingMsg]);
+            setIsTyping(false);
+        });
+
+        newSocket.on('user_typing', ({ senderId, isTyping }) => {
+            setIsTyping(isTyping);
+        });
+
+        // Listen for incoming video call signals
+        newSocket.on('incoming_call', (data) => {
+            if (data.callType === 'video') {
+                // In a real app, show an accept/reject UI
+                // For now, auto-accept or just toggle state if it matches the current session
+                if (data.callerId === lawyer.id) {
+                    setIsVideoCallActive(true);
+                }
+            }
+        });
+
+        return () => newSocket.close();
+    }, [user, lawyer.id]);
 
     const handleSendMessage = (content) => {
         const newMessage = {
@@ -61,29 +104,43 @@ const ConsultationPage = () => {
         };
         setMessages([...messages, newMessage]);
 
-        // Simulate lawyer response
-        setTimeout(() => {
-            const botResponse = {
-                sender: 'lawyer',
-                senderName: lawyer.name,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                type: 'text',
-                content: "Internalizing that. Let me look into the specific jurisdictional requirements for this amendment."
-            };
-            setMessages(prev => [...prev, botResponse]);
-        }, 3000);
+        if (socket) {
+            socket.emit('send_message', {
+                senderId: user?.id,
+                receiverId: lawyer.id,
+                text: content
+            });
+        }
+    };
+
+    const startVideoCall = () => {
+        if (socket) {
+            socket.emit('initiate_call', {
+                callerId: user.id,
+                callerName: user.name || 'A Client',
+                receiverId: lawyer.id,
+                callType: 'video',
+                channelName: `session_${session.id || 'test'}`
+            });
+        }
+        setIsVideoCallActive(true);
     };
 
     return (
         <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden relative bg-background-light dark:bg-background-dark transition-colors font-sans">
-            {/* Left/Center: Chat Interface */}
+            {isVideoCallActive && (
+                <VideoCall
+                    channelName={`session_${session.id || 'test'}`}
+                    lawyer={lawyer}
+                    onLeave={() => setIsVideoCallActive(false)}
+                />
+            )}
             <main className="flex-1 flex flex-col h-full bg-white dark:bg-slate-950 relative overflow-hidden transition-colors">
-                <ChatHeader lawyer={lawyer} />
+                <ChatHeader lawyer={lawyer} onStartVideoCall={startVideoCall} />
                 <MessageList messages={messages} lawyer={lawyer} />
                 <ChatInput onSendMessage={handleSendMessage} />
             </main>
 
-            {/* Right Sidebar */}
             <ContextSidebar lawyer={lawyer} />
         </div>
     );

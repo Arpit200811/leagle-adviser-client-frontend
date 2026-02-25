@@ -22,7 +22,9 @@ const ProfileHeader = ({ lawyer }) => {
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1"><HiOutlineBriefcase className="text-lg" /> {lawyer.experience} Experience</span>
                         <span className="flex items-center gap-1 text-yellow-500 font-bold"><HiStar className="text-lg" /> {lawyer.rating} ({lawyer.reviews} Reviews)</span>
-                        <span className="flex items-center gap-1"><HiOutlineGlobeAlt className="text-lg" /> {lawyer.languages.join(', ')}</span>
+                        {lawyer.languages?.length > 0 && (
+                            <span className="flex items-center gap-1"><HiOutlineGlobeAlt className="text-lg" /> {lawyer.languages.join(', ')}</span>
+                        )}
                     </div>
                 </div>
                 <div className="flex sm:flex-col gap-3 justify-center sm:w-auto w-full mt-4 sm:mt-0">

@@ -1,44 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { HiOutlinePaperAirplane } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { Button } from '../common';
 import LawyerSummary from './LawyerSummary';
 import StarRating from './StarRating';
 import AttributeTags from './AttributeTags';
+import api from '../../services/api';
 
 const ReviewPage = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [rating, setRating] = useState(4);
     const [selectedTags, setSelectedTags] = useState(["Professional", "Empathetic"]);
     const [reviewText, setReviewText] = useState("");
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [lawyer, setLawyer] = useState(null);
+
+    useEffect(() => {
+        const fetchLawyer = async () => {
+            if (!id) return;
+            try {
+                const response = await api.get(`/lawyers/${id}`);
+                const data = response.data;
+                setLawyer({
+                    name: data.user?.name || "Unknown Attorney",
+                    id: data.id,
+                    image: data.user?.image || "https://via.placeholder.com/150",
+                    specialty: data.specialization || "General Practice",
+                    duration: "45 min Consultation"
+                });
+            } catch (error) {
+                console.error("Failed to fetch lawyer:", error);
+            }
+        };
+        fetchLawyer();
+    }, [id]);
 
     const handleSubmit = async () => {
+        if (!lawyer) return;
         setLoading(true);
-        // Simulate processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setLoading(false);
-        toast.success('Review submitted successfully! Thank you for your feedback.', {
-            style: {
-                borderRadius: '1rem',
-                background: '#0f172a',
-                color: '#fff',
-                fontWeight: '900',
-                fontSize: '0.8rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-            },
-        });
-        setTimeout(() => navigate('/my-consultations'), 1000);
-    };
-    const lawyer = {
-        name: "Sarah Jenkins",
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDXasIqwthwuaLcSEEHPoSCA4BEcR0Gz126dWxCXFcUD58TAJMbZ3nPvNOETxYIqR-emLMXaFufqrDWspNUYYwOYC3cM61uJnIfj53KcNrmoLJO8VMkR3FQVS9mkauV055XcrgWwgXbk3KckeEZltXjushHsLDvtiEcEpibSboXM8msH622cEAwycH6qjDNEFhAwtGkGh-F2GzXnNbUpOE_yi8JKmgkvYCOgT5Q70Wev9kha3vaEQr9wP-M8ZTFS38G1YVuOt1zmi4",
-        specialty: "Family Law Specialist",
-        duration: "45 min Consultation"
+        try {
+            await api.post('/reviews', {
+                lawyerId: lawyer.id,
+                rating: rating,
+                comment: reviewText,
+                appointmentId: null
+            });
+
+            toast.success('Review submitted successfully! Thank you for your feedback.', {
+                style: {
+                    borderRadius: '1rem',
+                    background: '#0f172a',
+                    color: '#fff',
+                    fontWeight: '900',
+                    fontSize: '0.8rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                },
+            });
+            setTimeout(() => navigate('/my-consultations'), 1000);
+        } catch (error) {
+            console.error("Failed to post review:", error);
+            toast.error("Failed to submit review.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const toggleTag = (tag) => {
@@ -49,8 +78,6 @@ const ReviewPage = () => {
 
     return (
         <div className="bg-background-light dark:bg-background-dark transition-colors duration-200 font-sans">
-
-
             <main className="flex-1 flex justify-center py-12 px-4 md:px-6">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -65,7 +92,18 @@ const ReviewPage = () => {
 
                     {/* Review Card */}
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8 md:p-12 flex flex-col gap-10">
-                        <LawyerSummary lawyer={lawyer} />
+
+                        {!lawyer ? (
+                            <div className="animate-pulse flex gap-4">
+                                <div className="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+                                <div className="flex flex-col justify-center gap-2">
+                                    <div className="w-32 h-4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                                    <div className="w-24 h-3 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <LawyerSummary lawyer={lawyer} />
+                        )}
 
                         <StarRating rating={rating} onRatingChange={setRating} />
 
@@ -74,7 +112,7 @@ const ReviewPage = () => {
                         {/* Review Text Area */}
                         <div className="flex flex-col gap-5 text-left">
                             <div className="flex justify-between items-end">
-                                <h3 className="text-slate-900 dark:text-white text-lg font-black tracking-tight uppercase tracking-widest text-xs">Write a Review</h3>
+                                <h3 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-xs">Write a Review</h3>
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{reviewText.length}/500</span>
                             </div>
                             <div className="relative group">
@@ -120,8 +158,6 @@ const ReviewPage = () => {
                             </button>
                         </div>
                     </div>
-
-                    {/* Footer Info */}
                     <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pb-8">
                         By submitting this review, you agree to our <Link className="text-primary hover:underline decoration-primary/30 underline-offset-4 transition-all" to="/terms">Review Policy</Link>.
                     </p>

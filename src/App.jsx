@@ -4,6 +4,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 import NavbarLayout from './components/layout/Navbar';
 
@@ -23,6 +24,7 @@ import { LawyerSearchPage } from './components/LawyerSearch';
 import { OTPVerificationPage } from './components/Auth/OTP';
 import { ErrorPage } from './components/Error';
 import ForgotPasswordPage from './components/Auth/ForgotPasswordPage';
+import ResetPasswordPage from './components/Auth/ResetPasswordPage';
 import TermsPage from './components/layout/TermsPage';
 import PrivacyPage from './components/layout/PrivacyPage';
 import BookingSuccessPage from './components/Consultation/BookingSuccessPage';
@@ -56,14 +58,23 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/find-lawyer" element={<LawyerSearchPage />} />
           <Route path="/lawyer/:id" element={<LawyerProfilePage />} />
-          <Route path="/consultation" element={<ConsultationPage />} />
-          <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/my-consultations" element={<MyConsultationsPage />} />
-          <Route path="/vault" element={<VaultPage />} />
-          <Route path="/review/:id" element={<ReviewPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/help-center" element={<HelpCenterPage />} />
-          <Route path="/booking-success" element={<BookingSuccessPage />} />
+
+          {/* 🔐 Authenticated Routes inside Layout */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/consultation" element={<ConsultationPage />} />
+            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/my-consultations" element={<MyConsultationsPage />} />
+            <Route path="/vault" element={<VaultPage />} />
+            <Route path="/review/:id" element={<ReviewPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/help-center" element={<HelpCenterPage />} />
+            <Route path="/booking-success" element={<BookingSuccessPage />} />
+          </Route>
+        </Route>
+
+        {/* 🔐 Protected pages WITHOUT navbar */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/video-consultation" element={<VideoConsultationPage />} />
         </Route>
 
         {/* 🔐 Pages WITHOUT navbar */}
@@ -71,7 +82,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/otp-verification" element={<OTPVerificationPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/video-consultation" element={<VideoConsultationPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
 

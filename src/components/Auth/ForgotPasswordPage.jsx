@@ -25,10 +25,15 @@ const ForgotPasswordPage = () => {
         }
 
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setLoading(false);
-        setIsSubmitted(true);
+        try {
+            const api_url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            await (await import('axios')).default.post(`${api_url}/auth/forgot-password`, { email });
+            setIsSubmitted(true);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
 

@@ -1,7 +1,7 @@
 import { HiOutlineCloudUpload } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-
+import api from '../../services/api';
 
 const FileUploadZone = () => {
     return (
@@ -14,11 +14,10 @@ const FileUploadZone = () => {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     multiple=""
                     type="file"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                         const file = e.target.files[0];
                         if (file) {
-                            toast.loading(`Uploading ${file.name}...`, {
-                                duration: 2000,
+                            const loadingToast = toast.loading(`Uploading ${file.name}...`, {
                                 style: {
                                     borderRadius: '1rem',
                                     background: '#0f172a',
@@ -28,7 +27,20 @@ const FileUploadZone = () => {
                                     fontSize: '0.7rem'
                                 }
                             });
-                            setTimeout(() => toast.success(`${file.name} uploaded successfully!`), 2000);
+
+                            try {
+                                const formData = new FormData();
+                                formData.append('file', file);
+
+                                await api.post('/uploads/vault', formData, {
+                                    headers: { 'Content-Type': 'multipart/form-data' }
+                                });
+
+                                toast.success(`${file.name} uploaded successfully!`, { id: loadingToast });
+                            } catch (error) {
+                                console.error("Upload error:", error);
+                                toast.error(`Failed to upload ${file.name}`, { id: loadingToast });
+                            }
                         }
                     }}
                 />

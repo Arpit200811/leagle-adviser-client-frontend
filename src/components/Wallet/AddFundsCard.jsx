@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import api from '../../services/api';
 import {
   HiOutlinePlusCircle,
   HiOutlineCreditCard,
@@ -13,7 +14,7 @@ import {
 import { motion } from 'framer-motion';
 import { Button } from '../common';
 
-const AddFundsCard = () => {
+const AddFundsCard = ({ onPaymentSuccess }) => {
   const [amount, setAmount] = useState(100);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [loading, setLoading] = useState(false);
@@ -21,24 +22,67 @@ const AddFundsCard = () => {
   const [upiId, setUpiId] = useState('');
 
 
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.id = 'razorpay-sdk';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePay = async () => {
+    if (paymentMethod !== 'card' && paymentMethod !== 'upi') {
+      toast.error('Currently only Card and UPI are supported');
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (!window.Razorpay) {
+      const res = await loadRazorpay();
+      if (!res) {
+        toast.error('Razorpay SDK failed to load');
+        setLoading(false);
+        return;
+      }
+    }
 
-    setLoading(false);
-    toast.success(`Successfully added $${amount.toFixed(2)} to your wallet!`, {
-      style: {
-        borderRadius: '1rem',
-        background: '#0f172a',
-        color: '#fff',
-        fontWeight: '900',
-        fontSize: '0.8rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-      },
-    });
+    try {
+      const orderRes = await api.post('/payments/create-order', { amount });
+      const { id: order_id, currency } = orderRes.data;
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        amount: amount * 100,
+        currency: currency,
+        name: 'Legal Consultant',
+        description: 'Wallet Recharge',
+        order_id: order_id,
+        handler: async (response) => {
+          try {
+            const verifyRes = await api.post('/payments/verify', { ...response, amount });
+            if (verifyRes.data.success) {
+              toast.success(`Successfully added ₹${amount} to your wallet!`);
+              if (onPaymentSuccess) onPaymentSuccess();
+            }
+          } catch (err) {
+            toast.error('Verification failed');
+          }
+        },
+        prefill: { email: 'user@example.com', contact: '9999999999' },
+        theme: { color: '#135bec' },
+        modal: { ondismiss: () => setLoading(false) }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (error) {
+      toast.error('Failed to initiate payment');
+      setLoading(false);
+    }
   };
 
   const quickAmounts = [50, 100, 200];

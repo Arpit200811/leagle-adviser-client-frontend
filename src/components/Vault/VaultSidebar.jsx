@@ -22,15 +22,8 @@ const VaultSidebar = () => {
                 {/* Folders Tree Mockup */}
                 <div className="flex flex-col gap-1">
                     <h3 className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Folders</h3>
-                    <div className="flex flex-col gap-1">
-                        <FolderItem label="Contracts" hasChildren />
-                        <FolderItem label="Evidence" isOpen hasChildren>
-                            <div className="pl-6 pt-1 flex flex-col gap-1">
-                                <button className="text-left text-sm font-bold text-primary py-1.5 px-3 rounded-lg bg-primary/5 border border-primary/10">Photos</button>
-                                <button className="text-left text-sm font-bold text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 py-1.5 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Documents</button>
-                            </div>
-                        </FolderItem>
-                        <FolderItem label="Personal ID" hasChildren />
+                    <div className="flex flex-col gap-1 px-3">
+                        <p className="text-xs font-bold text-slate-500">No folders created yet.</p>
                     </div>
                 </div>
             </div>
@@ -40,12 +33,12 @@ const VaultSidebar = () => {
                 <div className="flex flex-col gap-3">
                     <div className="flex justify-between items-end">
                         <p className="text-slate-900 dark:text-white text-xs font-black uppercase tracking-wider">Storage</p>
-                        <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black">4.5 GB / 10 GB</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black">0 GB / 10 GB</p>
                     </div>
                     <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
                         <motion.div
                             initial={{ width: 0 }}
-                            animate={{ width: '45%' }}
+                            animate={{ width: '0%' }}
                             className="h-full bg-primary rounded-full shadow-sm"
                         ></motion.div>
                     </div>

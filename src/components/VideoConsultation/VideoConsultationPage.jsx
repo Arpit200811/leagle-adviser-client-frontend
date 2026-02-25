@@ -2,13 +2,16 @@ import ConsultationHeader from './ConsultationHeader';
 import VideoFeeds from './VideoFeeds';
 import VideoControls from './VideoControls';
 import ConsultationSidebar from './ConsultationSidebar';
+import { useLocation } from 'react-router-dom';
 
 const VideoConsultationPage = () => {
-    // Mock data for the demonstration
+    const location = useLocation();
+    const session = location.state?.session || {};
+
     const lawyer = {
-        name: "Sarah Jenkins, Esq.",
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBmx1kdWHzp7-Xg7oLsun-PRFaxaWSxyxnDy7pkrBUkwPEng2pjHGfsQ14LZA19V0rPA63fzG3wr8CbDuUTI1fSndIgP6M7hUIJXUN-DM8EvYxlOGObypQ0Z0MDUOmTI2xUj3qpLQHvtXbweJ8hpEi8_I3P950MpwMb0maWdeHoBfg7E48vAyqrgFKTnC2AlS9ZxRjXcgdSWDKTdTqwyqMZCBwN75RC7OKD35n-gs2EDeCAq3mbC3QjkorOIccqDLADXiQxcMdhno8",
-        specialty: "Family Law / Corporate"
+        name: session.lawyerName || "Unknown Attorney",
+        image: session.lawyerImage || "https://via.placeholder.com/150",
+        specialty: session.specialty || "General Practice"
     };
 
     return (

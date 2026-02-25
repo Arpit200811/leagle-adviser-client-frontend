@@ -20,7 +20,7 @@ const BalanceCard = ({ balance }) => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="text-5xl font-black text-primary tracking-tighter"
                     >
-                        {balance.toFixed(2)}
+                        {Number(balance).toFixed(2)}
                     </motion.span>
                 </div>
 

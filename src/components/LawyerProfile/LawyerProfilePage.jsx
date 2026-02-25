@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { lawyers } from '../../data/lawyers';
 import { useEffect, useState } from 'react';
+import api from '../../services/api';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -17,18 +17,52 @@ const LawyerProfilePage = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setIsLoading(true);
-        const foundLawyer = lawyers.find(l => l.id === parseInt(id));
+        const fetchLawyer = async () => {
+            setIsLoading(true);
+            try {
+                const response = await api.get(`/lawyers/${id}`);
+                const data = response.data;
 
-        // Simulate loading
-        const timer = setTimeout(() => {
-            if (foundLawyer) {
-                setLawyer(foundLawyer);
+                // Mapping backend to frontend fields
+                const mappedLawyer = {
+                    ...data,
+                    name: data.user?.name || "Unknown Attorney",
+                    headline: data.about ? (data.about.length > 50 ? data.about.substring(0, 50) + "..." : data.about) : `${data.experience || 5} Years of Experience in Legal Consultation`,
+                    languages: data.languages || [], // removed mock
+                    specialty: data.specialization || 'General Practice',
+                    rate: Number(data.price) || 0,
+                    reviewsCount: data.reviews ? data.reviews.length : 0,
+                    rating: Number(data.rating) || 0,
+                    experience: data.experience || 0,
+                    image: data.user?.image || 'https://via.placeholder.com/150',
+                    about: data.about ? data.about.split('\n').filter(Boolean) : [
+                        "Professional legal advisor verified on the platform."
+                    ],
+                    credentials: data.credentials || [],
+                    recentReviews: data.reviews && data.reviews.length > 0 ? data.reviews.map(r => ({
+                        author: r.user?.name || "Client",
+                        date: new Date(r.createdAt).toLocaleDateString(),
+                        stars: r.rating,
+                        comment: r.comment
+                    })) : [],
+                    ratingStats: data.ratingStats || {
+                        5: 80,
+                        4: 15,
+                        3: 5,
+                        2: 0,
+                        1: 0
+                    }
+                };
+
+                setLawyer(mappedLawyer);
+            } catch (error) {
+                console.error("Error fetching lawyer:", error);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
-        }, 600);
+        };
 
-        return () => clearTimeout(timer);
+        fetchLawyer();
     }, [id]);
 
     if (isLoading) {
@@ -83,9 +117,9 @@ const LawyerProfilePage = () => {
                     <span className="text-slate-400">/</span>
                     <Link to="/find-lawyer" className="text-slate-500 dark:text-slate-400 font-medium hover:text-primary transition-colors">Lawyers</Link>
                     <span className="text-slate-400">/</span>
-                    <Link to="/find-lawyer" className="text-slate-500 dark:text-slate-400 font-medium hover:text-primary transition-colors">Family Law</Link>
+                    <Link to="/find-lawyer" className="text-slate-500 dark:text-slate-400 font-medium hover:text-primary transition-colors">{lawyer.specialty}</Link>
                     <span className="text-slate-400">/</span>
-                    <span className="text-slate-900 dark:text-white font-medium">Sarah J. Miller</span>
+                    <span className="text-slate-900 dark:text-white font-medium">{lawyer.name}</span>
                 </div>
 
                 <motion.div

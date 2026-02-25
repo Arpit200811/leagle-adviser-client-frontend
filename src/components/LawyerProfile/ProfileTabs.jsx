@@ -47,15 +47,19 @@ const ProfileTabs = ({ lawyer }) => {
                 {activeTab === 'credentials' && (
                     <section>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Credentials & Education</h3>
-                        <div className="relative pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-8">
-                            {lawyer.credentials.map((cred, i) => (
-                                <div key={i} className="relative">
-                                    <div className={`absolute -left-[21px] top-1 h-3 w-3 rounded-full ring-4 ring-white dark:ring-slate-800 ${i === 0 ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{cred.institution}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">{cred.degree} • {cred.year}</p>
-                                </div>
-                            ))}
-                        </div>
+                        {lawyer.credentials?.length > 0 ? (
+                            <div className="relative pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-8">
+                                {lawyer.credentials.map((cred, i) => (
+                                    <div key={i} className="relative">
+                                        <div className={`absolute -left-[21px] top-1 h-3 w-3 rounded-full ring-4 ring-white dark:ring-slate-800 ${i === 0 ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">{cred.institution}</h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">{cred.degree} • {cred.year}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">No credentials provided on profile.</p>
+                        )}
                     </section>
                 )}
 
@@ -87,30 +91,34 @@ const ProfileTabs = ({ lawyer }) => {
                         </div>
 
                         {/* Reviews List */}
-                        <div className="space-y-6">
-                            {lawyer.recentReviews.map((review, i) => (
-                                <div key={i} className="flex flex-col gap-3">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-slate-200 dark:bg-slate-700 h-10 w-10 rounded-full flex items-center justify-center text-slate-500 font-bold uppercase">
-                                                {review.author.slice(0, 2)}
+                        {lawyer.recentReviews?.length > 0 ? (
+                            <div className="space-y-6">
+                                {lawyer.recentReviews.map((review, i) => (
+                                    <div key={i} className="flex flex-col gap-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-slate-200 dark:bg-slate-700 h-10 w-10 rounded-full flex items-center justify-center text-slate-500 font-bold uppercase">
+                                                    {review.author.slice(0, 2)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{review.author}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{review.date}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{review.author}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">{review.date}</p>
+                                            <div className="flex gap-0.5 text-yellow-500">
+                                                {[...Array(5)].map((_, j) => (
+                                                    <HiStar key={j} className={`text-sm ${j < review.stars ? 'fill-current' : 'text-slate-300'}`} />
+                                                ))}
                                             </div>
                                         </div>
-                                        <div className="flex gap-0.5 text-yellow-500">
-                                            {[...Array(5)].map((_, j) => (
-                                                <HiStar key={j} className={`text-sm ${j < review.stars ? 'fill-current' : 'text-slate-300'}`} />
-                                            ))}
-                                        </div>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300">{review.comment}</p>
+                                        {i < lawyer.recentReviews.length - 1 && <hr className="border-slate-100 dark:border-slate-700 mt-3" />}
                                     </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">{review.comment}</p>
-                                    {i < lawyer.recentReviews.length - 1 && <hr className="border-slate-100 dark:border-slate-700 mt-3" />}
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-slate-500 dark:text-slate-400 text-sm">No reviews submitted yet.</p>
+                        )}
                     </section>
                 )}
                 {activeTab === 'locations' && (
@@ -132,9 +140,14 @@ const ProfileTabs = ({ lawyer }) => {
                                     </button>
                                 </div>
                             </div>
-                            {/* Static Map Placeholder */}
-                            <div className="w-full h-64 bg-slate-200 dark:bg-slate-700 rounded-xl animate-pulse flex items-center justify-center">
-                                <p className="text-slate-400 dark:text-slate-500 font-medium italic">Map integration placeholder...</p>
+                            {/* Static Map Embed */}
+                            <div className="w-full h-64 bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden flex items-center justify-center relative shadow-sm">
+                                <iframe
+                                    className="w-full h-full border-0 grayscale hover:grayscale-0 transition-all duration-500"
+                                    src="https://www.openstreetmap.org/export/embed.html?bbox=-74.020%2C40.700%2C-73.980%2C40.730&amp;layer=mapnik&amp;marker=40.715%2C-74.000"
+                                    allowFullScreen
+                                    title="Map Location"
+                                ></iframe>
                             </div>
                         </div>
                     </section>
